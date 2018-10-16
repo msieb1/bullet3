@@ -8,7 +8,7 @@ import numpy as np
 import copy
 import math
 import pybullet_data
-
+import time
 
 class Kuka:
 
@@ -22,7 +22,7 @@ class Kuka:
     self.fingerTipForce = 2
     self.useInverseKinematics = 1
     self.useSimulation = 1
-    self.useNullSpace =21
+    self.useNullSpace = 0 
     self.useOrientation = 1
     self.kukaEndEffectorIndex = 6
     self.kukaGripperIndex = 7
@@ -50,7 +50,7 @@ class Kuka:
       p.resetJointState(self.kukaUid,jointIndex,self.jointPositions[jointIndex])
       p.setJointMotorControl2(self.kukaUid,jointIndex,p.POSITION_CONTROL,targetPosition=self.jointPositions[jointIndex],force=self.maxForce)
     
-    self.trayUid = p.loadURDF(os.path.join(self.urdfRootPath,"tray/tray.urdf"), 0.640000,0.075000,-0.190000,0.000000,0.000000,1.000000,0.000000)
+    #self.trayUid = p.loadURDF(os.path.join(self.urdfRootPath,"tray/tray.urdf"), 0.640000,0.075000,-0.190000,0.000000,0.000000,1.000000,0.000000)
     self.endEffectorPos = [0.537,0.0,0.5]
     self.endEffectorAngle = 0
     
@@ -165,3 +165,24 @@ class Kuka:
         motor = self.motorIndices[action]
         p.setJointMotorControl2(self.kukaUid,motor,p.POSITION_CONTROL,targetPosition=motorCommands[action],force=self.maxForce)
       
+  def moveKukaEndtoPos(self, newxy, orn=None):
+      if orn is None:
+          orn = p.getQuaternionFromEuler([0, -math.pi,0])  # so gripper is always pointing down
+      kuka_min_height = 0.0  #limit min height
+      newxy[2] = max(kuka_min_height, newxy[2])
+      for kuka_sec in range(500):
+          jointPoses = p.calculateInverseKinematics(
+              self.kukaUid,
+              self.kukaEndEffectorIndex,
+              newxy,
+              orn,
+              lowerLimits=self.ll,
+              upperLimits=self.ul,
+              jointRanges=self.jr,
+              restPoses=self.rp)
+          for i in range(self.kukaEndEffectorIndex+1):
+              p.setJointMotorControl2(bodyIndex=self.kukaUid,jointIndex=i,controlMode=p.POSITION_CONTROL,\
+                targetPosition=jointPoses[i],targetVelocity=0,force=self.maxForce,positionGain=0.03,velocityGain=1)
+
+          p.stepSimulation()
+          time.sleep(0.001)

@@ -14,6 +14,7 @@ from . import kuka
 import random
 import pybullet_data
 from pkg_resources import parse_version
+from pdb import set_trace
 
 largeValObservation = 100
 
@@ -36,6 +37,7 @@ class KukaGymEnv(gym.Env):
     #print("KukaGymEnv __init__")
     self._isDiscrete = isDiscrete
     self._timeStep = 1./240.
+    self._timePerAction = 30
     self._urdfRoot = urdfRoot
     self._actionRepeat = actionRepeat
     self._isEnableSelfCollision = isEnableSelfCollision
@@ -47,6 +49,7 @@ class KukaGymEnv(gym.Env):
     self._cam_dist = 1.3
     self._cam_yaw = 180
     self._cam_pitch = -40
+    self.goal_state = None
 
     self._p = p
     if self._renders:
@@ -58,7 +61,7 @@ class KukaGymEnv(gym.Env):
       p.connect(p.DIRECT)
     #timinglog = p.startStateLogging(p.STATE_LOGGING_PROFILE_TIMINGS, "kukaTimings.json")
     self._seed()
-    self.reset()
+    self._reset()
     observationDim = len(self.getExtendedObservation())
     #print("observationDim")
     #print(observationDim)
@@ -74,8 +77,8 @@ class KukaGymEnv(gym.Env):
     self.observation_space = spaces.Box(-observation_high, observation_high)
     self.viewer = None
 
-  def _reset(self):
-    #print("KukaGymEnv _reset")
+  def _reset(self, reset_pos=None):
+      #print("KukaGymEnv _reset")
     self.terminated = 0
     p.resetSimulation()
     p.setPhysicsEngineParameter(numSolverIterations=150)
@@ -94,6 +97,7 @@ class KukaGymEnv(gym.Env):
     self._kuka = kuka.Kuka(urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
     self._envStepCounter = 0
     p.stepSimulation()
+
     self._observation = self.getExtendedObservation()
     return np.array(self._observation)
 
@@ -159,7 +163,8 @@ class KukaGymEnv(gym.Env):
   def step2(self, action):
     for i in range(self._actionRepeat):
       self._kuka.applyAction(action)
-      p.stepSimulation()
+      for j in range(int(self._timePerAction)):
+        p.stepSimulation()
       if self._termination():
         break
       self._envStepCounter += 1
@@ -222,7 +227,7 @@ class KukaGymEnv(gym.Env):
       self._observation = self.getExtendedObservation()
       return True
     maxDist = 0.005
-    closestPoints = p.getClosestPoints(self._kuka.trayUid, self._kuka.kukaUid,maxDist)
+    closestPoints = p.getClosestPoints(self.blockUid, self._kuka.kukaUid,maxDist)
 
     if (len(closestPoints)):#(actualEndEffectorPos[2] <= -0.43):
       self.terminated = 1

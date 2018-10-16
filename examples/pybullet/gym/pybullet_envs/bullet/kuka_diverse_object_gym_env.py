@@ -91,6 +91,8 @@ class KukaDiverseObjectEnv(KukaGymEnv):
     else:
       self.cid = p.connect(p.DIRECT)
     self._seed()
+    self.reset()
+
 
     if (self._isDiscrete):
       if self._removeHeightHack:
@@ -142,7 +144,7 @@ class KukaDiverseObjectEnv(KukaGymEnv):
     # Choose the objects in the bin.
     urdfList = self._get_random_object(
       self._numObjects, self._isTest)
-    self._objectUids = self._randomly_place_objects(urdfList)
+    #self._objectUids = self._randomly_place_objects(urdfList)
     self._observation = self._get_observation()
     return np.array(self._observation)
 

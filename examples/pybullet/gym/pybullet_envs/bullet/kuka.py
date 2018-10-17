@@ -10,6 +10,8 @@ import math
 import pybullet_data
 import time
 
+from pdb import set_trace
+
 class Kuka:
 
   def __init__(self, urdfRootPath=pybullet_data.getDataPath(), timeStep=0.01):
@@ -92,6 +94,13 @@ class Kuka:
     #print ("self.numJoints")
     #print (self.numJoints)
     if (self.useInverseKinematics):
+
+      xlow = 0.4
+      xhigh = 0.8
+      ylow = -0.2
+      yhigh = 0.2
+      zlow = 0.6
+      zhigh = 0.2
       
       dx = motorCommands[0]
       dy = motorCommands[1]
@@ -107,24 +116,26 @@ class Kuka:
     
       
       self.endEffectorPos[0] = self.endEffectorPos[0]+dx
-      if (self.endEffectorPos[0]>0.65):
-        self.endEffectorPos[0]=0.65
-      if (self.endEffectorPos[0]<0.50):
-        self.endEffectorPos[0]=0.50
+      if (self.endEffectorPos[0]>xhigh):
+        self.endEffectorPos[0]=xhigh
+      if (self.endEffectorPos[0]<xlow):
+        self.endEffectorPos[0]=xlow
       self.endEffectorPos[1] = self.endEffectorPos[1]+dy
-      if (self.endEffectorPos[1]<-0.17):
-        self.endEffectorPos[1]=-0.17
-      if (self.endEffectorPos[1]>0.22):
-        self.endEffectorPos[1]=0.22
-      
+      if (self.endEffectorPos[1]<ylow):
+        self.endEffectorPos[1]=ylow
+      if (self.endEffectorPos[1]>yhigh):
+        self.endEffectorPos[1]=yhigh
+      self.endEffectorPos[2] = self.endEffectorPos[2]+dz
+      if (self.endEffectorPos[2]<zlow):
+        self.endEffectorPos[2]=zlow
+      if (self.endEffectorPos[2]>zhigh):
+        self.endEffectorPos[2]=zhigh     
       #print ("self.endEffectorPos[2]")
       #print (self.endEffectorPos[2])
       #print("actualEndEffectorPos[2]")
       #print(actualEndEffectorPos[2])
       #if (dz<0 or actualEndEffectorPos[2]<0.5):
-      self.endEffectorPos[2] = self.endEffectorPos[2]+dz
     
-     
       self.endEffectorAngle = self.endEffectorAngle + da
       pos = self.endEffectorPos
       orn = p.getQuaternionFromEuler([0,-math.pi,0]) # -math.pi,yaw])

@@ -3,6 +3,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 print ("current_dir=" + currentdir)
 os.sys.path.insert(0,currentdir)
 
+import pybullet as p
 import math
 import gym
 from gym import spaces
@@ -135,5 +136,28 @@ class KukaGymEnvReach(KukaGymEnv):
     if reset_pos is not None:
       # self._kuka.moveKukaEndtoPos(reset_pos)
       self._kuka.endEffectorPos = reset_pos
+    self._observation = self.getExtendedObservation()
+    return np.array(self._observation)
+
+  def _get_link_state(self):
+    true_state = p.getLinkState(self._kuka.kukaUid,self._kuka.kukaEndEffectorIndex)
+    return true_state
+
+  def _reset_positions(self, reset_pos):
+    xpos = 0.55 +0.12*random.random()
+    ypos = 0 +0.2*random.random()
+    ang = 3.14*0.5+3.1415925438*random.random()
+    orn = p.getQuaternionFromEuler([0,0,ang])
+    #self.blockUid =p.loadURDF(os.path.join(self._urdfRoot,"block.urdf"), xpos,ypos,-0.15,orn[0],orn[1],orn[2],orn[3])
+    p.setGravity(0,0,-10)
+
+    self._envStepCounter = 0
+    p.stepSimulation()
+    if reset_pos is not None:
+      # self._kuka.moveKukaEndtoPos(reset_pos)
+      self._kuka.endEffectorPos = reset_pos
+    else:
+      self.endEffectorPos = [0.537,0.0,0.5]
+    self._kuka.applyAction([0,0,0,0,0])
     self._observation = self.getExtendedObservation()
     return np.array(self._observation)
